@@ -1,4 +1,4 @@
-package depend
+package vabastegi
 
 import (
 	"context"
@@ -15,11 +15,11 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-// Version of current Depend package
+// Version of current Vabastegi package
 const Version = "0.1.0"
 
 // Provider is what a pkgs use to create dependency.
-type Provider[T any] func(ctx context.Context, depend *App[T]) error
+type Provider[T any] func(context.Context, *App[T]) error
 
 // App is the dependency injection manger.
 type App[T any] struct {
@@ -187,7 +187,7 @@ func (a *App[T]) banner(providersCount int, duration time.Duration) {
 	if a.options.AppName != "" {
 		mainLogo += " │ " + centerValue(a.options.AppName, lineLen) + " │\n"
 	}
-	mainLogo += " │ " + centerValue("Depend v"+Version, lineLen) + " │\n"
+	mainLogo += " │ " + centerValue("Vabastegi v"+Version, lineLen) + " │\n"
 	mainLogo += " │ " + centerValue("Dependency Manager", lineLen) + " │\n"
 
 	mainLogo += fmt.Sprintf(

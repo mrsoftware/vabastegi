@@ -1,16 +1,16 @@
-package depend
+package vabastegi
 
-// Options of depend.
+// Options of Vabastegi.
 type Options struct {
 	Logger           Logger
 	GracefulShutdown bool
 	AppName          string
 }
 
-// Option of depend.
+// Option of Vabastegi.
 type Option func(options *Options)
 
-// WithLogger provide logger for depend.
+// WithLogger provide logger for Vabastegi.
 func WithLogger(logger Logger) Option {
 	return func(options *Options) {
 		options.Logger = logger

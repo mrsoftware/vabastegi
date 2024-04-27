@@ -1,4 +1,4 @@
-package depend
+package vabastegi
 
 import (
 	"fmt"
@@ -39,12 +39,11 @@ const (
 
 var _ Logger = &IOLogger{}
 
-// Logger is what depend use as logger.
+// Logger is what Vabastegi use as logger.
 type Logger interface {
-	Debug(message string, args ...interface{})
-	Info(message string, args ...interface{})
-	Warn(message string, args ...interface{})
-	Error(message string, args ...interface{})
+	Debugf(message string, args ...interface{})
+	Infof(message string, args ...interface{})
+	Errorf(message string, args ...interface{})
 }
 
 // NewIOLogger create new instance of IOLogger.
@@ -62,19 +61,15 @@ func (i *IOLogger) IsEnable(level logLevel) bool {
 	return level >= i.level
 }
 
-func (i *IOLogger) Debug(message string, args ...interface{}) {
+func (i *IOLogger) Debugf(message string, args ...interface{}) {
 	i.log(DebugLogLevel, message, args...)
 }
 
-func (i *IOLogger) Info(message string, args ...interface{}) {
+func (i *IOLogger) Infof(message string, args ...interface{}) {
 	i.log(InfoLogLevel, message, args...)
 }
 
-func (i *IOLogger) Warn(message string, args ...interface{}) {
-	i.log(WarnLogLevel, message, args...)
-}
-
-func (i *IOLogger) Error(message string, args ...interface{}) {
+func (i *IOLogger) Errorf(message string, args ...interface{}) {
 	i.log(ErrorLogLevel, message, args...)
 }
 
@@ -83,5 +78,5 @@ func (i *IOLogger) log(level logLevel, message string, args ...interface{}) {
 		return
 	}
 
-	fmt.Fprintf(i.writer, "[Depend] ["+level.String()+"] "+message+"\n", args...)
+	fmt.Fprintf(i.writer, "[Vabastegi] ["+level.String()+"] "+message+"\n", args...)
 }

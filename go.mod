@@ -1,4 +1,4 @@
-module github.com/mrsoftware/depend
+module github.com/mrsoftware/vabastegi
 
 go 1.21.8
 
