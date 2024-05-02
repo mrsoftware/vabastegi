@@ -1,4 +1,6 @@
 # :unicorn: Vabastegi [![GoDoc](https://pkg.go.dev/badge/github.com/mrsoftware/vabastegi)](https://pkg.go.dev/github.com/mrsoftware/vabastegi) [![Github release](https://img.shields.io/github/release/mrsoftware/vabastegi.svg)](https://github.com/mrsoftware/vabastegi/releases)
+> [!WARNING]  
+> Be aware this package is not ready for production usage and is in the development phase.
 
 Vabastegi (in farsi) is a dependency management system for Go.
 
