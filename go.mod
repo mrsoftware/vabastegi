@@ -1,6 +1,6 @@
 module github.com/mrsoftware/vabastegi
 
-go 1.21.8
+go 1.18.0
 
 require github.com/mattn/go-runewidth v0.0.15
 

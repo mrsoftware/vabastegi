@@ -80,7 +80,7 @@ func (a *App[T]) Build(ctx context.Context, provider Provider[T]) (err error) {
 			logMessage = logMessage + " ✓"
 		}
 
-		a.options.Logger.Info(logMessage)
+		a.options.Logger.Infof(logMessage)
 	}()
 
 	return provider(ctx, a)
@@ -114,7 +114,7 @@ func (a *App[T]) Wait() error {
 
 // Shutdown ths application.
 func (a *App[T]) Shutdown(ctx context.Context, reason string) {
-	a.options.Logger.Info("Shutting down( %s ) ...", reason)
+	a.options.Logger.Infof("Shutting down( %s ) ...", reason)
 
 	for i := len(a.onShutdown) - 1; i >= 0; i-- {
 		if err := a.onShutdown[i](ctx); err != nil {
