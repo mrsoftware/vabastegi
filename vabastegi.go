@@ -194,7 +194,7 @@ func (a *App[T]) banner(providersCount int, duration time.Duration) {
 		" │                                                   │\n"+
 			" │ Providers %s │\n"+
 			" │ Duration %s  │\n"+
-			" └───────────────────────────────────────────────────┘"+
+			" └───────────────────────────────────────────────────┘\n"+
 			colorReset, value(strconv.Itoa(providersCount), 38),
 		value(duration.String(), 38),
 	)
