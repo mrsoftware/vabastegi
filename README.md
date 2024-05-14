@@ -125,7 +125,7 @@ func main() {
       return
     }
   
-    // wi will wait for all background tasks to complete.
+    // we will wait for all background tasks to complete.
     if err := application.Wait(); err != nil {
       application.Logger().Errorf("application is finished: %s", err)
   
