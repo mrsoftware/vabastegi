@@ -2,21 +2,13 @@ package vabastegi
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"reflect"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
-	"time"
-
-	"github.com/mattn/go-runewidth"
 )
-
-// Version of current Vabastegi package
-const Version = "0.1.0"
 
 // Provider is what a pkgs use to create dependency.
 type Provider[T any] func(context.Context, *App[T]) error
@@ -57,14 +49,11 @@ func (a *App[T]) UpdateOptions(options ...Option) {
 
 // Builds the dependency structure of your app.
 func (a *App[T]) Builds(ctx context.Context, providers ...Provider[T]) error {
-	startAt := time.Now()
 	for _, provider := range providers {
 		if err := a.Build(ctx, provider); err != nil {
 			return err
 		}
 	}
-
-	a.banner(len(providers), time.Since(startAt))
 
 	return nil
 }
@@ -146,58 +135,4 @@ func (a *App[T]) registerGracefulShutdown() {
 		appSignal := <-interruptChan
 		a.Shutdown(context.Background(), appSignal.String())
 	}()
-}
-
-func (a *App[T]) banner(providersCount int, duration time.Duration) {
-	const (
-		colorBlack = "\u001b[90m"
-		colorCyan  = "\u001b[96m"
-		colorReset = "\u001b[0m"
-	)
-
-	centerValue := func(s string, width int) string {
-		const padDiv = 2
-		pad := strconv.Itoa((width - runewidth.StringWidth(s)) / padDiv)
-		str := fmt.Sprintf("%"+pad+"s", " ")
-		str += fmt.Sprintf("%s%s%s", colorCyan, s, colorBlack)
-		str += fmt.Sprintf("%"+pad+"s", " ")
-		if runewidth.StringWidth(s)-10 < width && runewidth.StringWidth(s)%2 == 0 {
-			// add an ending space if the length of str is even and str is not too long
-			str += " "
-		}
-		return str
-	}
-
-	value := func(s string, width int) string {
-		pad := width - len(s)
-		str := ""
-		for i := 0; i < pad; i++ {
-			str += "."
-		}
-		if s == "Disabled" {
-			str += " " + s
-		} else {
-			str += fmt.Sprintf(" %s%s%s", colorCyan, s, colorBlack)
-		}
-		return str
-	}
-
-	const lineLen = 49
-	mainLogo := colorBlack + " ┌───────────────────────────────────────────────────┐\n"
-	if a.options.AppName != "" {
-		mainLogo += " │ " + centerValue(a.options.AppName, lineLen) + " │\n"
-	}
-	mainLogo += " │ " + centerValue("Vabastegi v"+Version, lineLen) + " │\n"
-	mainLogo += " │ " + centerValue("Dependency Manager", lineLen) + " │\n"
-
-	mainLogo += fmt.Sprintf(
-		" │                                                   │\n"+
-			" │ Providers %s │\n"+
-			" │ Duration %s  │\n"+
-			" └───────────────────────────────────────────────────┘\n"+
-			colorReset, value(strconv.Itoa(providersCount), 38),
-		value(duration.String(), 38),
-	)
-
-	fmt.Fprint(os.Stdout, mainLogo)
 }
