@@ -17,10 +17,15 @@ type Provider[T any] func(context.Context, *App[T]) error
 type App[T any] struct {
 	waitGroup            sync.WaitGroup
 	errList              []error
-	onShutdown           []func(ctx context.Context) error
+	onShutdown           []shoutDown
 	Hub                  T
 	options              Options
 	backgroundTasksCount int
+}
+
+type shoutDown struct {
+	fn   func(ctx context.Context) error
+	name string
 }
 
 // New instance of App Dependency management.
@@ -50,9 +55,14 @@ func (a *App[T]) UpdateOptions(options ...Option) {
 // Builds the dependency structure of your app.
 func (a *App[T]) Builds(ctx context.Context, providers ...Provider[T]) error {
 	for _, provider := range providers {
-		if err := a.Build(ctx, provider); err != nil {
-			return err
+		err := a.Build(ctx, provider)
+		if err == nil {
+			continue
 		}
+
+		a.Shutdown(ctx, "Provider Failure")
+
+		return err
 	}
 
 	return nil
@@ -60,7 +70,7 @@ func (a *App[T]) Builds(ctx context.Context, providers ...Provider[T]) error {
 
 // Build use the provider to set a dependency.
 func (a *App[T]) Build(ctx context.Context, provider Provider[T]) (err error) {
-	logMessage := a.getProviderName(provider)
+	logMessage := a.getFuncName(provider, 0)
 
 	defer func() {
 		if err != nil {
@@ -103,10 +113,12 @@ func (a *App[T]) Wait() error {
 
 // Shutdown ths application.
 func (a *App[T]) Shutdown(ctx context.Context, reason string) {
-	a.options.Logger.Infof("Shutting down( %s ) ...", reason)
+	a.options.Logger.Infof("Shutting Down( %s ) ...", reason)
 
-	for i := len(a.onShutdown) - 1; i >= 0; i-- {
-		if err := a.onShutdown[i](ctx); err != nil {
+	for _, shutdown := range a.onShutdown {
+		a.options.Logger.Infof("Shutting Down %s", shutdown.name)
+
+		if err := shutdown.fn(ctx); err != nil {
 			a.errList = append(a.errList, err)
 		}
 	}
@@ -118,13 +130,13 @@ func (a *App[T]) Shutdown(ctx context.Context, reason string) {
 
 // OnShutdown register any method for Shutdown method.
 func (a *App[T]) OnShutdown(fn func(ctx context.Context) error) {
-	a.onShutdown = append(a.onShutdown, fn)
+	a.onShutdown = append(a.onShutdown, shoutDown{fn: fn, name: a.getFuncName(fn, 1)})
 }
 
-func (a *App[T]) getProviderName(creator interface{}) string {
+func (a *App[T]) getFuncName(creator interface{}, index int) string {
 	parts := strings.Split(runtime.FuncForPC(reflect.ValueOf(creator).Pointer()).Name(), ".")
 
-	return parts[len(parts)-1]
+	return parts[len(parts)-(1+index)]
 }
 
 func (a *App[T]) registerGracefulShutdown() {
