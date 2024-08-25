@@ -8,7 +8,7 @@ import (
 func IgnoreError[T any](provider Provider[T]) Provider[T] {
 	return func(ctx context.Context, app *App[T]) error {
 		if err := provider(ctx, app); err != nil {
-			app.Logger().Errorf("privider error ignored: %s", err.Error())
+			app.Log(ErrorLogLevel, "provider error ignored: %s", err)
 		}
 
 		return nil
