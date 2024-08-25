@@ -137,6 +137,53 @@ func main() {
 
 ```
 
+### Modules
+
+```go
+
+		creators.RedisConnectionModule[app.Hub](),
+		creators.Redis2ConnectionModule[app.Hub]("WorkerManager"),
+```
+
+```go
+func WorkerManagerModule[T any]() vabastegi.Provider[T] {
+	return vabastegi.NewModule(func(ctx context.Context, app *vabastegi.App[T]) vabastegi.Module {
+		//data := "host with data"
+		return vabastegi.Module{
+			Name: "WorkerManager",
+			Data: routine.NewSequence(10, 100),
+			// Data: "some",
+			//Data: &data,
+		}
+	})
+}
+
+func RedisConnectionModule[T any]() vabastegi.Provider[T] {
+	return vabastegi.NewModule(func(ctx context.Context, app *vabastegi.App[T]) vabastegi.Module {
+		//data := "host with data"
+		return vabastegi.Module{
+			Name: "Redis",
+			Data: redis.NewClient(&redis.Options{}),
+			// Data: "some",
+			//Data: &data,
+		}
+	})
+}
+
+func Redis2ConnectionModule[T any](name string) vabastegi.Provider[T] {
+	return vabastegi.NewModule(func(ctx context.Context, app *vabastegi.App[T]) vabastegi.Module {
+		//data := "host with data"
+		return vabastegi.Module{
+			Name: name,
+			Data: redis.NewClient(&redis.Options{}),
+			// Data: "some",
+			//Data: &data,
+		}
+	})
+}
+
+```
+
 for mode details, check the [documentation](https://godoc.org/github.com/mrsoftware/vabastegi)
 
 
