@@ -56,7 +56,7 @@ func (a *App[T]) Builds(ctx context.Context, providers ...Provider[T]) (err erro
 	a.options.EventHandlers.Publish(&OnBuildsExecuting{BuildAt: startAt})
 
 	defer func() {
-		a.options.EventHandlers.Publish(&OnApplicationShutdownExecuted{Runtime: time.Now().Sub(startAt), Err: err})
+		a.options.EventHandlers.Publish(&OnApplicationShutdownExecuted{Runtime: time.Since(startAt), Err: err})
 	}()
 
 	for _, provider := range providers {
