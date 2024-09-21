@@ -37,46 +37,46 @@ const (
 	ErrorLogLevel
 )
 
-var _ Logger = &IOLogger{}
+var _ EventHandler = &EventLogger{}
 
-// Logger is what Vabastegi use as logger.
-type Logger interface {
-	Debugf(message string, args ...interface{})
-	Infof(message string, args ...interface{})
-	Errorf(message string, args ...interface{})
-}
-
-// NewIOLogger create new instance of IOLogger.
-func NewIOLogger(writer io.Writer, level logLevel) Logger {
-	return &IOLogger{writer: writer, level: level}
-}
-
-// IOLogger is a Logger that write to passed io.Writer.
-type IOLogger struct {
+// EventLogger is use event of vabastegi and log them.
+type EventLogger struct {
 	writer io.Writer
 	level  logLevel
 }
 
-func (i *IOLogger) IsEnable(level logLevel) bool {
-	return level >= i.level
+// NewEventLogger create new instance of EventLogger.
+func NewEventLogger(writer io.Writer, level logLevel) *EventLogger {
+	return &EventLogger{writer: writer, level: level}
 }
 
-func (i *IOLogger) Debugf(message string, args ...interface{}) {
-	i.log(DebugLogLevel, message, args...)
+func (l *EventLogger) IsEnable(level logLevel) bool {
+	return level >= l.level
 }
 
-func (i *IOLogger) Infof(message string, args ...interface{}) {
-	i.log(InfoLogLevel, message, args...)
-}
-
-func (i *IOLogger) Errorf(message string, args ...interface{}) {
-	i.log(ErrorLogLevel, message, args...)
-}
-
-func (i *IOLogger) log(level logLevel, message string, args ...interface{}) {
-	if !i.IsEnable(level) {
+func (l *EventLogger) log(level logLevel, message string, args ...interface{}) {
+	if !l.IsEnable(level) {
 		return
 	}
 
-	fmt.Fprintf(i.writer, "[Vabastegi] ["+level.String()+"] "+message+"\n", args...)
+	fmt.Fprintf(l.writer, "[Vabastegi] ["+level.String()+"] "+message+"\n", args...)
+}
+
+func (l *EventLogger) OnEvent(event Event) {
+	switch e := event.(type) {
+	case *OnBuildExecuted:
+		if e.Err != nil {
+			l.log(ErrorLogLevel, e.ProviderName+" ✕")
+
+			return
+		}
+
+		l.log(InfoLogLevel, e.ProviderName+" ✓")
+	case *OnShutdownExecuting:
+		l.log(InfoLogLevel, "Shutting Down %s", e.ProviderName)
+	case *OnApplicationShutdownExecuting:
+		l.log(InfoLogLevel, "Shutting Down Application: %s", e.Reason)
+	case *OnLog:
+		l.log(e.Level, e.Message, e.Args...)
+	}
 }

@@ -2,20 +2,13 @@ package vabastegi
 
 // Options of Vabastegi.
 type Options struct {
-	Logger           Logger
 	GracefulShutdown bool
 	AppName          string
+	EventHandlers    EventHandlers
 }
 
 // Option of Vabastegi.
 type Option func(options *Options)
-
-// WithLogger provide logger for Vabastegi.
-func WithLogger(logger Logger) Option {
-	return func(options *Options) {
-		options.Logger = logger
-	}
-}
 
 // WithGraceFullShutdown used if you need gracefully shutdown for your application.
 func WithGraceFullShutdown(active bool) Option {
@@ -28,5 +21,12 @@ func WithGraceFullShutdown(active bool) Option {
 func WithAppName(appName string) Option {
 	return func(options *Options) {
 		options.AppName = appName
+	}
+}
+
+// WithEventHandlers register event handlers for vabastegi events.
+func WithEventHandlers(handlers ...EventHandler) Option {
+	return func(options *Options) {
+		options.EventHandlers = append(options.EventHandlers, handlers...)
 	}
 }
