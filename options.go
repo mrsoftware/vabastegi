@@ -4,7 +4,7 @@ package vabastegi
 type Options struct {
 	GracefulShutdown bool
 	AppName          string
-	EventHandlers    EventHandlers
+	EventHandlers    []EventHandler
 }
 
 // Option of Vabastegi.

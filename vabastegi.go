@@ -25,38 +25,38 @@ type App[T any] struct {
 	options              Options
 	backgroundTasksCount int
 	graceFullOnce        sync.Once
+	Event                *EventManager
 }
 
 // New instance of App Dependency management.
 func New[T any](options ...Option) *App[T] {
-	app := App[T]{
-		errors:  errors.NewMultiError(),
-		options: Options{EventHandlers: make(EventHandlers, 0)},
+	var op Options
+
+	for _, option := range options {
+		option(&op)
 	}
-	app.UpdateOptions(options...)
+
+	app := App[T]{
+		options: op,
+		errors:  errors.NewMultiError(),
+		Event:   NewEventManager(op.EventHandlers),
+	}
+
+	if op.GracefulShutdown {
+		app.registerGracefulShutdown()
+	}
 
 	return &app
-}
-
-// UpdateOptions is used if you want to change any options for App.
-func (a *App[ـ]) UpdateOptions(options ...Option) {
-	for _, option := range options {
-		option(&a.options)
-	}
-
-	if a.options.GracefulShutdown {
-		a.registerGracefulShutdown()
-	}
 }
 
 // Builds the dependency structure of your app.
 func (a *App[T]) Builds(ctx context.Context, providers ...Provider[T]) (err error) {
 	startAt := time.Now()
 
-	a.options.EventHandlers.Publish(&OnBuildsExecuting{BuildAt: startAt})
+	a.Event.Publish(&OnBuildsExecuting{BuildAt: startAt})
 
 	defer func() {
-		a.options.EventHandlers.Publish(&OnApplicationShutdownExecuted{Runtime: time.Since(startAt), Err: err})
+		a.Event.Publish(&OnApplicationShutdownExecuted{Runtime: time.Since(startAt), Err: err})
 	}()
 
 	for _, provider := range providers {
@@ -77,14 +77,14 @@ func (a *App[T]) Builds(ctx context.Context, providers ...Provider[T]) (err erro
 func (a *App[T]) Build(ctx context.Context, provider Provider[T]) (err error) {
 	startAt := time.Now()
 
-	a.options.EventHandlers.Publish(&OnBuildExecuting{
+	a.Event.Publish(&OnBuildExecuting{
 		ProviderName: a.getProviderName(provider, 0),
 		CallerPath:   a.getProviderName(provider, -1),
 		BuildAt:      startAt,
 	})
 
 	defer func() {
-		a.options.EventHandlers.Publish(&OnBuildExecuted{
+		a.Event.Publish(&OnBuildExecuted{
 			ProviderName: a.getProviderName(provider, 0),
 			CallerPath:   a.getProviderName(provider, -1),
 			Runtime:      time.Now().Sub(startAt),
@@ -115,13 +115,13 @@ func (a *App[ـ]) Wait() error {
 func (a *App[ـ]) Shutdown(ctx context.Context, reason string) {
 	startAt := time.Now()
 
-	a.options.EventHandlers.Publish(&OnApplicationShutdownExecuting{
+	a.Event.Publish(&OnApplicationShutdownExecuting{
 		Reason:     reason,
 		ShutdownAt: startAt,
 	})
 
 	defer func() {
-		a.options.EventHandlers.Publish(&OnApplicationShutdownExecuted{
+		a.Event.Publish(&OnApplicationShutdownExecuted{
 			Reason:  reason,
 			Runtime: time.Now().Sub(startAt),
 			Err:     a.errors.Err(),
@@ -140,14 +140,14 @@ func (a *App[ـ]) Shutdown(ctx context.Context, reason string) {
 func (a *App[ـ]) shutdown(ctx context.Context, fn func(context.Context) error) (err error) {
 	startAt := time.Now()
 
-	a.options.EventHandlers.Publish(&OnShutdownExecuting{
+	a.Event.Publish(&OnShutdownExecuting{
 		ProviderName: a.getProviderName(fn, 1),
 		CallerPath:   a.getProviderName(fn, -1),
 		ShutdownAt:   startAt,
 	})
 
 	defer func() {
-		a.options.EventHandlers.Publish(&OnShutdownExecuted{
+		a.Event.Publish(&OnShutdownExecuted{
 			ProviderName: a.getProviderName(fn, 1),
 			CallerPath:   a.getProviderName(fn, -1),
 			Runtime:      time.Now().Sub(startAt),
@@ -176,7 +176,7 @@ func (a *App[ـ]) getProviderName(creator interface{}, index int) string {
 
 // Log the message.
 func (a *App[ـ]) Log(level logLevel, message string, args ...interface{}) {
-	a.options.EventHandlers.Publish(&OnLog{LogAt: time.Now(), Level: level, Message: message, Args: args})
+	a.Event.Publish(&OnLog{LogAt: time.Now(), Level: level, Message: message, Args: args})
 }
 
 func (a *App[ـ]) registerGracefulShutdown() {

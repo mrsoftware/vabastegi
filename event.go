@@ -2,19 +2,31 @@ package vabastegi
 
 import "time"
 
-// Event is what Vabastegi event look like.
+// Event is what Vabastegi event looks like.
 type Event interface {
 	event() // it's private to prevent outside implementation.
 }
 
-// EventHandlers is list of EventHandler.
-type EventHandlers []EventHandler
+// EventManager responsible to manage the event system.
+type EventManager struct {
+	handlers []EventHandler
+}
+
+// NewEventManager create a new instance of EventManager.
+func NewEventManager(handlers []EventHandler) *EventManager {
+	return &EventManager{handlers: handlers}
+}
 
 // Publish passed event using event handlers.
-func (e EventHandlers) Publish(event Event) {
-	for _, handler := range e {
+func (e *EventManager) Publish(event Event) {
+	for _, handler := range e.handlers {
 		handler.OnEvent(event)
 	}
+}
+
+// Register event handler.
+func (e *EventManager) Register(handler EventHandler) {
+	e.handlers = append(e.handlers, handler)
 }
 
 // EventHandler used if you need to handle the events.
