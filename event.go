@@ -7,25 +7,25 @@ type Event interface {
 	event() // it's private to prevent outside implementation.
 }
 
-// EventManager responsible to manage the event system.
-type EventManager struct {
+// eventManager responsible to manage the event system.
+type eventManager struct {
 	handlers []EventHandler
 }
 
-// NewEventManager create a new instance of EventManager.
-func NewEventManager(handlers []EventHandler) *EventManager {
-	return &EventManager{handlers: handlers}
+// newEventManager create a new instance of eventManager.
+func newEventManager(handlers []EventHandler) *eventManager {
+	return &eventManager{handlers: handlers}
 }
 
 // Publish passed event using event handlers.
-func (e *EventManager) Publish(event Event) {
+func (e *eventManager) Publish(event Event) {
 	for _, handler := range e.handlers {
 		handler.OnEvent(event)
 	}
 }
 
 // Register event handler.
-func (e *EventManager) Register(handler EventHandler) {
+func (e *eventManager) Register(handler EventHandler) {
 	e.handlers = append(e.handlers, handler)
 }
 
@@ -118,15 +118,12 @@ type OnApplicationShutdownExecuting struct {
 	// ShutdownAt is the time shutdown happened.
 	ShutdownAt time.Time
 
-	// Reason is the reason for shutdown the application.
-	Reason string
+	// Cause is the reason for shutdown the application.
+	Cause error
 }
 
 // OnApplicationShutdownExecuted is emitted after the application Shutdown has been executed.
 type OnApplicationShutdownExecuted struct {
-	// Reason is the reason for shutdown the application.
-	Reason string
-
 	// Runtime specifies how long it took to run this hook.
 	Runtime time.Duration
 
