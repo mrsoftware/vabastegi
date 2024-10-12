@@ -75,7 +75,7 @@ func (l *EventLogger) OnEvent(event Event) {
 	case *OnShutdownExecuting:
 		l.log(InfoLogLevel, "Shutting Down %s", e.ProviderName)
 	case *OnApplicationShutdownExecuting:
-		l.log(InfoLogLevel, "Shutting Down Application: %s", e.Reason)
+		l.log(InfoLogLevel, "Shutting Down Application: %s", e.Cause)
 	case *OnLog:
 		l.log(e.Level, e.Message, e.Args...)
 	}

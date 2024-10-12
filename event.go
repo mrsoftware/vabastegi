@@ -2,19 +2,31 @@ package vabastegi
 
 import "time"
 
-// Event is what Vabastegi event look like.
+// Event is what Vabastegi event looks like.
 type Event interface {
 	event() // it's private to prevent outside implementation.
 }
 
-// EventHandlers is list of EventHandler.
-type EventHandlers []EventHandler
+// eventManager responsible to manage the event system.
+type eventManager struct {
+	handlers []EventHandler
+}
+
+// newEventManager create a new instance of eventManager.
+func newEventManager(handlers []EventHandler) *eventManager {
+	return &eventManager{handlers: handlers}
+}
 
 // Publish passed event using event handlers.
-func (e EventHandlers) Publish(event Event) {
-	for _, handler := range e {
+func (e *eventManager) Publish(event Event) {
+	for _, handler := range e.handlers {
 		handler.OnEvent(event)
 	}
+}
+
+// Register event handler.
+func (e *eventManager) Register(handler EventHandler) {
+	e.handlers = append(e.handlers, handler)
 }
 
 // EventHandler used if you need to handle the events.
@@ -106,15 +118,12 @@ type OnApplicationShutdownExecuting struct {
 	// ShutdownAt is the time shutdown happened.
 	ShutdownAt time.Time
 
-	// Reason is the reason for shutdown the application.
-	Reason string
+	// Cause is the reason for shutdown the application.
+	Cause error
 }
 
 // OnApplicationShutdownExecuted is emitted after the application Shutdown has been executed.
 type OnApplicationShutdownExecuted struct {
-	// Reason is the reason for shutdown the application.
-	Reason string
-
 	// Runtime specifies how long it took to run this hook.
 	Runtime time.Duration
 
