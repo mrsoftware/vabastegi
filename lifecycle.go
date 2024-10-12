@@ -2,11 +2,11 @@ package vabastegi
 
 import (
 	"context"
-	"os"
 	"os/signal"
 	"reflect"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/mrsoftware/errors"
@@ -52,7 +52,7 @@ func (l *lifecycle) Wait() error {
 
 // RegisterGracefulShutdown start listing on os signal and cancel the parent context on getting one.
 func (l *lifecycle) RegisterGracefulShutdown() {
-	ctx, cancel := signal.NotifyContext(l.ctx, os.Interrupt)
+	ctx, cancel := signal.NotifyContext(l.ctx, syscall.SIGINT, syscall.SIGTERM)
 
 	l.ctx, l.cancel = ctx, cancelToCancelCause(cancel)
 }
