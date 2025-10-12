@@ -3,6 +3,8 @@ package vabastegi
 import (
 	"context"
 	"time"
+
+	"github.com/mrsoftware/errors"
 )
 
 // Provider is a dependency provider for application.
@@ -91,4 +93,19 @@ func (a *App[ـ]) Log(level logLevel, message string, args ...interface{}) {
 // Wait for the application lifecycle to finish.
 func (a *App[_]) Wait() error {
 	return a.Lifecycle.Wait()
+}
+
+// Concurrent is if you need to run multiple provider concurrently.
+func Concurrent[T any](providers ...Provider[T]) Provider[T] {
+	return func(ctx context.Context, app *App[T]) error {
+		wg := errors.NewWaitGroup(errors.WaitGroupWithContext(ctx))
+
+		for _, provider := range providers {
+			wg.DoWithContext(ctx, func(ctx context.Context) error {
+				return provider(ctx, app)
+			})
+		}
+
+		return wg.Wait()
+	}
 }
