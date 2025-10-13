@@ -2,6 +2,8 @@ package vabastegi
 
 import (
 	"context"
+	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/mrsoftware/errors"
@@ -95,14 +97,18 @@ func (a *App[_]) Wait() error {
 	return a.Lifecycle.Wait()
 }
 
+var concurrentFuncRefName = runtime.FuncForPC(reflect.ValueOf(Concurrent[any]).Pointer()).Name()
+
 // Concurrent is if you need to run multiple provider concurrently.
 func Concurrent[T any](providers ...Provider[T]) Provider[T] {
 	return func(ctx context.Context, app *App[T]) error {
 		wg := errors.NewWaitGroup(errors.WaitGroupWithContext(ctx))
 
 		for _, provider := range providers {
+			provider := provider
+
 			wg.DoWithContext(ctx, func(ctx context.Context) error {
-				return provider(ctx, app)
+				return app.Builds(provider)
 			})
 		}
 

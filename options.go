@@ -1,6 +1,12 @@
 package vabastegi
 
-import "context"
+import (
+	"context"
+	"io"
+	"time"
+
+	"github.com/mrsoftware/errors"
+)
 
 // Options of Vabastegi.
 type Options struct {
@@ -38,5 +44,22 @@ func WithEventHandlers(handlers ...EventHandler) Option {
 func WithContext(ctx context.Context) Option {
 	return func(options *Options) {
 		options.Ctx = ctx
+	}
+}
+
+// WithTimeout used if you need to pass timout for application booting.
+func WithTimeout(timeout time.Duration) Option {
+	return func(options *Options) {
+		// ignoring cancel
+		ctx, _ := context.WithTimeoutCause(options.Ctx, timeout, errors.New("application timeout"))
+
+		options.Ctx = ctx
+	}
+}
+
+// WithEventLogger register event handlers for logger.
+func WithEventLogger(writer io.Writer, level logLevel) Option {
+	return func(options *Options) {
+		options.EventHandlers = append(options.EventHandlers, NewEventLogger(writer, level))
 	}
 }
