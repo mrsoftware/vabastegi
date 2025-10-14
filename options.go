@@ -8,6 +8,9 @@ import (
 	"github.com/mrsoftware/errors"
 )
 
+// ErrApplicationTimeout .
+var ErrApplicationTimeout = errors.New("application timeout")
+
 // Options of Vabastegi.
 type Options struct {
 	GracefulShutdown bool
@@ -51,7 +54,7 @@ func WithContext(ctx context.Context) Option {
 func WithTimeout(timeout time.Duration) Option {
 	return func(options *Options) {
 		// ignoring cancel
-		ctx, _ := context.WithTimeoutCause(options.Ctx, timeout, errors.New("application timeout"))
+		ctx, _ := context.WithTimeoutCause(options.Ctx, timeout, ErrApplicationTimeout)
 
 		options.Ctx = ctx
 	}

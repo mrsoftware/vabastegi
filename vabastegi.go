@@ -55,11 +55,9 @@ func (a *App[T]) Builds(providers ...Provider[T]) (err error) {
 	defer func() { a.Events.Publish(&OnApplicationShutdownExecuted{Runtime: time.Since(startAt), Err: err}) }()
 
 	for _, provider := range providers {
-		if err = a.Build(a.Lifecycle.GetContext(), provider); err == nil {
-			continue
+		if err = a.Build(a.Lifecycle.GetContext(), provider); err != nil {
+			return err
 		}
-
-		return err
 	}
 
 	return nil
@@ -67,6 +65,12 @@ func (a *App[T]) Builds(providers ...Provider[T]) (err error) {
 
 // Build use the provider to set a dependency.
 func (a *App[T]) Build(ctx context.Context, provider Provider[T]) (err error) {
+	select {
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	default:
+	}
+
 	startAt := time.Now()
 
 	a.Events.Publish(&OnBuildExecuting{
