@@ -42,7 +42,7 @@ func (l *lifecycle) Wait() error {
 	var err error
 	select {
 	case <-l.ctx.Done():
-		err = l.ctx.Err()
+		err = context.Cause(l.ctx)
 	case err = <-errors.WaitChanel(l.waitGroup):
 		l.Stop(err)
 	}
