@@ -42,7 +42,7 @@ func (l *lifecycle) Wait() error {
 	var err error
 	select {
 	case <-l.ctx.Done():
-		err = l.ctx.Err()
+		err = context.Cause(l.ctx)
 	case err = <-errors.WaitChanel(l.waitGroup):
 		l.Stop(err)
 	}
@@ -129,7 +129,14 @@ func getProviderName(creator interface{}, index int) string {
 		return reference
 	}
 
-	parts := strings.Split(reference, ".")
+	splitCount := -1
+
+	if strings.HasPrefix(reference, concurrentFuncRefName) {
+		reference = concurrentFuncRefName
+		splitCount = 3
+	}
+
+	parts := strings.SplitN(reference, ".", splitCount)
 
 	return parts[len(parts)-(1+index)]
 }

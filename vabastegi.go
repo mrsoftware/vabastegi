@@ -2,7 +2,11 @@ package vabastegi
 
 import (
 	"context"
+	"reflect"
+	"runtime"
 	"time"
+
+	"github.com/mrsoftware/errors"
 )
 
 // Provider is a dependency provider for application.
@@ -51,11 +55,9 @@ func (a *App[T]) Builds(providers ...Provider[T]) (err error) {
 	defer func() { a.Events.Publish(&OnApplicationShutdownExecuted{Runtime: time.Since(startAt), Err: err}) }()
 
 	for _, provider := range providers {
-		if err = a.Build(a.Lifecycle.GetContext(), provider); err == nil {
-			continue
+		if err = a.Build(a.Lifecycle.GetContext(), provider); err != nil {
+			return err
 		}
-
-		return err
 	}
 
 	return nil
@@ -63,6 +65,12 @@ func (a *App[T]) Builds(providers ...Provider[T]) (err error) {
 
 // Build use the provider to set a dependency.
 func (a *App[T]) Build(ctx context.Context, provider Provider[T]) (err error) {
+	select {
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	default:
+	}
+
 	startAt := time.Now()
 
 	a.Events.Publish(&OnBuildExecuting{
@@ -91,4 +99,23 @@ func (a *App[ـ]) Log(level logLevel, message string, args ...interface{}) {
 // Wait for the application lifecycle to finish.
 func (a *App[_]) Wait() error {
 	return a.Lifecycle.Wait()
+}
+
+var concurrentFuncRefName = runtime.FuncForPC(reflect.ValueOf(Concurrent[any]).Pointer()).Name()
+
+// Concurrent is if you need to run multiple provider concurrently.
+func Concurrent[T any](providers ...Provider[T]) Provider[T] {
+	return func(ctx context.Context, app *App[T]) error {
+		wg := errors.NewWaitGroup(errors.WaitGroupWithContext(ctx))
+
+		for _, provider := range providers {
+			provider := provider
+
+			wg.DoWithContext(ctx, func(ctx context.Context) error {
+				return app.Builds(provider)
+			})
+		}
+
+		return wg.Wait()
+	}
 }
